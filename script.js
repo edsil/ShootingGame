@@ -1,15 +1,13 @@
 "use strict";
-var canvas, ctx;
+// Projectiles
 var radius = 4;
-var maxV = 10;
-var particles = [];
-var amplitude = 40;
-var mouse = { x: 0, y: 0, click: false };
+var projectiles = [];
+var maxV = 30;
+// Player
 var playerSize = 10;
 var playerSpeed = 1.4;
 var playerPos = { x: 300, y: 300 };
-var cvsX, cvsY, cvsW, cvsH;
-var projectiles = [];
+// Walls
 var wallsCoors = [
   { x: 0.25, y: 0.25, w: 0.02, h: 0.52 },
   { x: 0.25, y: 0.25, w: 0.52, h: 0.02 },
@@ -18,9 +16,13 @@ var wallsCoors = [
 var wallKill = [
   { x: 0.1, y: 0.9, w: 0.1, h: 0.02 }];
 var walls = [];
-var disloc = 0;
+var disloc = 0.1;
 var dislocAll = { x: 0, y: 0 };
 var dislocAllValue = 0;
+// Global Variable
+var canvas, ctx;
+var mouse = { x: 0, y: 0, click: false };
+var cvsX, cvsY, cvsW, cvsH;
 var timer;
 var deltaTime = 0;
 var keys = { c: false, w: false, a: false, s: false, d: false };
@@ -168,6 +170,8 @@ class Wall {
     this.y = Math.round(this.origY * this.canvH);
     this.w = Math.round(this.origW * this.canvW);
     this.h = Math.round(this.origH * this.canvH);
+    this.dislocX = 0;
+    this.dislocY = 0;
   }
 
   draw() {
@@ -177,19 +181,20 @@ class Wall {
     this.ctx.beginPath();
     this.ctx.rect(this.x, this.y, this.w, this.h);
     this.ctx.stroke();
-    this.x = Math.round(this.origX * this.canvW + dislocAll.x);
-    this.y = Math.round(this.origY * this.canvH + dislocAll.y);
+    this.x = Math.round(this.origX * this.canvW + dislocAll.x + this.dislocX);
+    this.y = Math.round(this.origY * this.canvH + dislocAll.y + this.dislocY);
   }
 
   collide(obj) {
-    this.x = Math.round(this.origX * this.canvW + dislocAll.x);
-    this.y = Math.round(this.origY * this.canvH + dislocAll.y);
+    this.x = Math.round(this.origX * this.canvW + dislocAll.x + this.dislocX);
+    this.y = Math.round(this.origY * this.canvH + dislocAll.y + this.dislocY);
     var res = false;
     if (obj.dead) return res;
     if (((obj.y + obj.r) >= this.y && (obj.y - obj.r) <= (this.y + this.h)) || ((obj.y + obj.r + obj.vy * (deltaTime / 20)) >= this.y && (obj.y - obj.r + obj.vy * (deltaTime / 20)) <= (this.y + this.h))) {
       if (obj.vx > 0 && ((obj.x + obj.r) <= (this.x)) && (obj.x + obj.r + obj.vx * (deltaTime / 20)) >= this.x) {
         obj.vx = -Math.abs(obj.vx);
         obj.x = this.x - obj.r - 1 + obj.vx * (deltaTime / 20);
+        this.dislocX += disloc;
         if (this.x > (1 + 10 * disloc) && this.x < (cvsW - (1 + 10 * disloc + this.w))) {
           this.x += obj.vx;
           dislocAll.x += dislocAllValue;
@@ -198,6 +203,7 @@ class Wall {
       } else if (obj.vx < 0 && (obj.x - obj.r) >= (this.x + this.w) && (obj.x - obj.r + obj.vx * (deltaTime / 20)) <= (this.x + this.w)) {
         obj.vx = Math.abs(obj.vx);
         obj.x = this.x + this.w + obj.r + 1 + obj.vx * (deltaTime / 20);
+        this.dislocX -= disloc;
         if (this.x > (1 + 10 * disloc) && this.x < (cvsW - (1 + 10 * disloc + this.w))) {
           this.x -= obj.vx;
           dislocAll.x -= dislocAllValue;
@@ -210,6 +216,7 @@ class Wall {
       if (obj.vy > 0 && ((obj.y + obj.r) <= (this.y)) && (obj.y + obj.r + obj.vy * (deltaTime / 20)) >= this.y) {
         obj.vy = -Math.abs(obj.vy);
         obj.y = this.y - obj.r - 1 + obj.vy * (deltaTime / 20);
+        this.dislocY += disloc;
         if (this.y > (1 + 10 * disloc) && this.y < (cvsH - (1 + 10 * disloc + this.h))) {
           this.y += obj.vy;
           dislocAll.y += dislocAllValue;
@@ -218,6 +225,7 @@ class Wall {
       } else if (obj.vy < 0 && (obj.y - obj.r) >= (this.y + this.h) && (obj.y - obj.r + obj.vy * (deltaTime / 20)) <= (this.y + this.h)) {
         obj.vy = Math.abs(obj.vy);
         obj.y = this.y + this.h + obj.r + 1 + obj.vy * (deltaTime / 20);
+        this.dislocY -= disloc;
         if (this.y > (1 + 10 * disloc) && this.y < (cvsH - (1 + 10 * disloc + this.h))) {
           this.y -= obj.vy;
           dislocAll.y -= dislocAllValue;
@@ -226,8 +234,6 @@ class Wall {
       }
     }
     if (res && this.killer) obj.dead = true;
-    this.x = Math.round(this.origX * this.canvW + dislocAll.x);
-    this.y = Math.round(this.origY * this.canvH + dislocAll.y);
     return res;
   }
 }
