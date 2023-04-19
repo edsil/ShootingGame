@@ -16,7 +16,7 @@ var wallsCoors = [
 var wallKill = [
   { x: 0.1, y: 0.9, w: 0.1, h: 0.02 }];
 var walls = [];
-var disloc = 0.1;
+var disloc = 0;
 var dislocAll = { x: 0, y: 0 };
 var dislocAllValue = 0;
 // Global Variable
@@ -161,17 +161,18 @@ class Wall {
     this.origH = h;
     this.reCanvas(canvas);
     this.killer = killer;
+    this.dislocX = 0;
+    this.dislocY = 0;
   }
   reCanvas(canvas) {
     this.ctx = canvas.getContext("2d");
     this.canvW = canvas.width;
     this.canvH = canvas.height;
-    this.x = Math.round(this.origX * this.canvW);
-    this.y = Math.round(this.origY * this.canvH);
+    this.x = Math.round(this.origX * this.canvW + dislocAll.x + this.dislocX);
+    this.y = Math.round(this.origY * this.canvH + dislocAll.y + this.dislocY);
     this.w = Math.round(this.origW * this.canvW);
     this.h = Math.round(this.origH * this.canvH);
-    this.dislocX = 0;
-    this.dislocY = 0;
+
   }
 
   draw() {
