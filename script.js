@@ -1,15 +1,14 @@
 "use strict";
 // Projectiles
-var radius = 4;
+var radius = 3;
 var projectiles = [];
 var maxV = 30;
+var shootsPerFrame = 20;
 // Player
 var playerSize = 10;
 var playerSpeed = 2.4;
 var playerInitialPos = { x: 0.5, y: 0.465 };
-// Gravity
-var g = 0.0;
-var bounciness = 1;
+
 // Walls
 // var wallsCoors = [
 //   { x: 0.3, y: 0.3, w: 0.02, h: .5 },
@@ -36,6 +35,7 @@ var walls = [];
 var disloc = 0;
 var dislocAll = { x: 0, y: 0 };
 var dislocAllValue = 0;
+
 // Global Variable
 var canvas, ctx;
 var mouse = { x: 0, y: 0, click: false };
@@ -119,7 +119,13 @@ function update() {
 }
 
 function animate(ts) {
-  if (keys.c) clickMouse(null);
+  if (keys.c) {
+    for (var i = 0; i < shootsPerFrame; i++) {
+      var color = "hsl(" + Math.round(360 * (i / shootsPerFrame)) + ",50%,50%)";
+      //projectiles.push(new Projectile(playerPos.x, playerPos.y, mouse.x + (i - shootsPerFrame / 2) * radius, mouse.y + (i - shootsPerFrame / 2) * radius, radius, color, canvas));
+      projectiles.push(new Projectile(playerPos.x, playerPos.y, playerPos.x + (mouse.x - playerPos.x) * (1 + i / shootsPerFrame), playerPos.y + (mouse.y - playerPos.y) * (1 + i / shootsPerFrame), radius, color, canvas));
+    }
+  }
   moveCharacter();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
@@ -220,7 +226,6 @@ class Wall {
     if (((obj.y + obj.r) >= this.y && (obj.y - obj.r) <= (this.y + this.h)) || ((obj.y + obj.r + obj.vy * (deltaTime / 20)) >= this.y && (obj.y - obj.r + obj.vy * (deltaTime / 20)) <= (this.y + this.h))) {
       if (obj.vx > 0 && ((((obj.x + obj.r) <= (this.x + dislocAllValue + disloc)) && (obj.x + obj.r + obj.vx * (deltaTime / 20) + dislocAllValue + disloc) >= this.x))) {
         obj.vx = -Math.abs(obj.vx);
-        obj.vx *= bounciness;
         obj.x = this.x - obj.r - 1 + obj.vx * (deltaTime / 20) - dislocAllValue - disloc;
         this.dislocX += disloc;
         if (this.x > (1 + 10 * disloc) && this.x < (cvsW - (1 + 10 * disloc + this.w))) {
@@ -230,7 +235,6 @@ class Wall {
         res = true;
       } else if (obj.vx < 0 && (((obj.x - obj.r) >= (this.x + this.w - dislocAllValue - disloc) && (obj.x - obj.r + obj.vx * (deltaTime / 20) - dislocAllValue - disloc) <= (this.x + this.w)))) {
         obj.vx = Math.abs(obj.vx);
-        obj.vx *= bounciness;
         obj.x = this.x + this.w + obj.r + 1 + obj.vx * (deltaTime / 20) + dislocAllValue + disloc;
         this.dislocX -= disloc;
         if (this.x > (1 + 10 * disloc) && this.x < (cvsW - (1 + 10 * disloc + this.w))) {
@@ -244,7 +248,6 @@ class Wall {
     if (((obj.x + obj.r) >= this.x && (obj.x - obj.r) <= (this.x + this.w)) || ((obj.x + obj.r + obj.vx * (deltaTime / 20)) >= this.x && (obj.x - obj.r + obj.vx * (deltaTime / 20)) <= (this.x + this.w))) {
       if (obj.vy > 0 && ((((obj.y + obj.r) <= (this.y + dislocAllValue + disloc)) && (obj.y + obj.r + obj.vy * (deltaTime / 20) + dislocAllValue + disloc) >= this.y))) {
         obj.vy = -Math.abs(obj.vy);
-        obj.vy *= bounciness;
         obj.y = this.y - obj.r - 1 + obj.vy * (deltaTime / 20) - dislocAllValue - disloc;
         this.dislocY += disloc;
         if (this.y > (1 + 10 * disloc) && this.y < (cvsH - (1 + 10 * disloc + this.h))) {
@@ -254,7 +257,6 @@ class Wall {
         res = true;
       } else if (obj.vy < 0 && (((obj.y - obj.r) >= (this.y + this.h - dislocAllValue - disloc) && (obj.y - obj.r + obj.vy * (deltaTime / 20) - dislocAllValue - disloc) <= (this.y + this.h)))) {
         obj.vy = Math.abs(obj.vy);
-        obj.vy *= bounciness;
         obj.y = this.y + this.h + obj.r + 1 + obj.vy * (deltaTime / 20) + dislocAllValue + disloc;
         this.dislocY -= disloc;
         if (this.y > (1 + 10 * disloc) && this.y < (cvsH - (1 + 10 * disloc + this.h))) {
@@ -297,7 +299,6 @@ class Projectile {
     if (this.dead) return;
     if (Math.abs(this.vx) < 0.001) this.vx += (0.0001) * Math.sign(this.vx);
     if (Math.abs(this.vy) < 0.001) this.vy += (0.0001) * Math.sign(this.vy);
-    this.vy = this.vy + g;
     if (this.vy >= maxV) this.vy = maxV;
     this.x += this.vx * (deltaTime / 20);
     this.y += this.vy * (deltaTime / 20);
@@ -311,11 +312,9 @@ class Projectile {
     }
     if (this.y > (this.h - this.r)) {
       this.vy = - Math.abs(this.vy);
-      this.vy *= bounciness;
       this.y += (2 * this.vy);
     } else if (this.y < this.r) {
       this.vy = Math.abs(this.vy);
-      this.vy *= bounciness;
       this.y += (2 * this.vy);
     }
     //Wrap
